@@ -1,0 +1,45 @@
+# Use Miniconda3 image as base
+FROM continuumio/miniconda3
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
+WORKDIR /code
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get -y install netcat-openbsd gcc g++ libgl1\
+    && apt-get clean 
+
+
+# Copy environment.yml file
+COPY environment.yml /code/
+
+# Create the Conda environment
+RUN conda env create -f environment.yml
+
+# Make sure the environment is activated
+SHELL ["conda", "run", "-n", "virtualenv", "/bin/bash", "-c"]
+
+# Install mmcv separately to avoid build issues
+
+RUN conda run -n virtualenv pip install mmcv==2.1.0
+
+# Add the rest of the code
+COPY . /code/
+
+# Make port 8000 available to the world outside this container
+EXPOSE 8000
+
+# Command to run the application
+WORKDIR /code/vlp
+
+# Run Django collectstatic
+RUN conda run -n virtualenv python manage.py collectstatic --noinput
+
+
+
+# Command to start the server
+CMD ["conda", "run", "--no-capture-output", "-n", "virtualenv", "gunicorn", "--bind", "0.0.0.0:8000", "server.wsgi:application"]
