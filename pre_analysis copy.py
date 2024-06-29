@@ -432,4 +432,6 @@ if __name__ == "__main__":
     #add_new_url(new_youtube_url)
     # make_test_url_false()
     rows = get_all_rows()
-    print(rows)
+    connect_and_retrieve("SELECT * FROM api_query")
+
+    # print(rows)

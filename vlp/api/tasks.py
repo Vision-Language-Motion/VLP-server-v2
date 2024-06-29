@@ -38,7 +38,7 @@ def query_search():
                 break
         # Updating keyword in query
         if not DEBUG:
-            keyword.update_used_keyword
+            keyword.update_used_keyword()
             keyword.save()
         logger.warning(f"Keyword '{keyword.keyword}' queried and urls added to db")
     
