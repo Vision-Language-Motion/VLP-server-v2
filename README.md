@@ -1,6 +1,4 @@
-# VLP-server-managed-by-Daniel
-
-VLP server (please do not adjust anything here without letting me (Daniel) know) | I did not restrict the main branch. If we use this repo together e.g. creating an issue for each new function or something like that I will restrict the main branch against accidental pushes. Please remind me, if I forget
+# VLP-server-v2
 
 ## Keyword Process
 
@@ -16,14 +14,6 @@ We have a Query model of Keywords with a use counter and a last processed timest
 -   Können wir die URLs automatisch verarbeiten?
     Später:
 -   Können wir schauen wie gut ein Keyword ist, und neue irgendwie ranschaffen? (Semantic Web oder LLM?)
-
-### Git lfs
-
-Install git-lfs (for the pytorch models): (On Ubuntu)
-
-```bash
-git lfs install
-```
 
 ### How to run the server:
 
