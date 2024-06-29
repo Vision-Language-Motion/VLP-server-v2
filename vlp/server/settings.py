@@ -199,7 +199,8 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_BEAT_SCHEDULE = {
     'query-search-every-24-hours': {
         'task': 'api.tasks.query_search',
-        'schedule': 3600*24,  # Run every 24hours
-        # 'schedule': 10,  # Run every 10 seconds
+        
+        # 'schedule': 3600*24,  # Run every 24hours
+        'schedule': 10,  # Run every 10 seconds
     },
 }
