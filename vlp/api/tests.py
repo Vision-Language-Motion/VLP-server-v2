@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 import os
 from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query
 from server.settings import BASE_DIR
-from .tasks import process_video_without_human, query_search
+from .tasks import query_search, generate_keyword_and_add_to_query
 from .models import URL, Query
 from datetime import datetime
 from django.utils import timezone
@@ -104,7 +104,7 @@ class QuerySearchTestCase(TestCase):
         
         n_of_urls_initial = URL.objects.all().count()
         # Call the task function
-        query_search()
+        # query_search()
         
         # Comment this out if the API_KEY limit is reached
         '''
@@ -122,7 +122,29 @@ class QuerySearchTestCase(TestCase):
         '''
 
 class DatabaseExists(TestCase):
-    def database_existence(self):
-        n_of_urls_initial = URL.objects.all().count()
-        logger.warn(f"n_of_urls_initial:{n_of_urls_initial}")
-        assert(n_of_urls_initial > 0)
+    def URL_existence(self):
+        n_of_urls = URL.objects.all().count()
+        logger.warn(f"n_of_urls_initial:{n_of_urls}")
+        assert(n_of_urls > 0)
+    
+    def Query_existence(self):
+        n_of_keywords = Query.objects.all().count()
+        logger.warn(f"n_of_urls_initial:{n_of_keywords}")
+        assert(n_of_keywords > 0)
+
+
+class GenerateKeywords(TestCase):
+    def test_generate_keyword_and_add_to_query(self):
+        
+        before_top_100_keywords = Query.objects.order_by('-last_processed', 'use_counter')[:100]
+        n_of_keywords_initial = Query.objects.all().count()
+
+        generate_keyword_and_add_to_query()
+
+        self.assertGreater(Query.objects.all().count(), n_of_keywords_initial)
+        after_top_100_keywords = Query.objects.order_by('-last_processed', 'use_counter')[:100]
+        assert before_top_100_keywords != after_top_100_keywords, "Querysets are not different"
+
+
+
+        

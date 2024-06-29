@@ -25,6 +25,8 @@ ENV = os.environ.get('ENVIRONMENT', 'production')
 DO_DATABASE_PASSWORD = os.environ.get('DO_DATABASE_PASSWORD', None)
 AUTH_PASSWORD_FOR_REQUESTS = os.environ.get('AUTH_PASSWORD', None)
 GOOGLE_DEV_API_KEY = os.environ.get('GOOGLE_DEV_API_KEY', None)
+RAPIDAPI_KEY = os.environ.get('RAPIDAPI_KEY', None)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
