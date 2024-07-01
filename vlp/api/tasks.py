@@ -39,6 +39,6 @@ def query_search():
         # Updating keyword in query
         if not DEBUG:
             keyword.update_used_keyword()
-            keyword.save()
+            keyword.save()  # I think we can delete this line
         logger.warning(f"Keyword '{keyword.keyword}' queried and urls added to db")
     

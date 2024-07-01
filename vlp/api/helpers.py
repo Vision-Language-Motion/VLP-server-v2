@@ -1,6 +1,6 @@
 import os
 import yt_dlp as youtube_dl
-from server.settings import BASE_DIR, GOOGLE_DEV_API_KEY
+from server.settings import BASE_DIR, GOOGLE_DEV_API_KEY, DEBUG
 from moviepy.editor import VideoFileClip
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
@@ -13,8 +13,6 @@ from datetime import datetime
 # Definining download directory
 download_directory = os.path.join(BASE_DIR,'youtube-downloads')
 
-# Create a service object for interacting with the API
-youtube = build('youtube', 'v3', developerKey = GOOGLE_DEV_API_KEY)
 
 # Download
 def download_video(url):
@@ -164,26 +162,37 @@ def mock_search_videos_and_add_to_db(query, video_amount = 50):
     pass
 
 
-def search_videos_and_add_to_db(query, video_amount = 50):
-    '''
-    Accepts a query and video_amount (default: 50) to use the youtube API to search for videos 
-    and then fills them into the URL model as unprocessed videos
-    '''
+if not DEBUG:
+    # Create a service object for interacting with the API
+    youtube = build('youtube', 'v3', developerKey = GOOGLE_DEV_API_KEY)
 
-    # Make a request to the API's search.list method to retrieve videos
-    request = youtube.search().list(
-        part ='snippet',
-        q = query,
-        type = 'video',
-        maxResults = video_amount
-    )
-    
-    response = request.execute()
-    
-   # Adding the Urls into the URL model
-    for item in response['items']:
-        add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}")
+    def search_videos_and_add_to_db(query, video_amount = 50):
+        '''
+        Accepts a query and video_amount (default: 50) to use the youtube API to search for videos 
+        and then fills them into the URL model as unprocessed videos
+        '''
 
+        # Make a request to the API's search.list method to retrieve videos
+        request = youtube.search().list(
+            part ='snippet',
+            q = query,
+            type = 'video',
+            maxResults = video_amount
+        )
+        
+        response = request.execute()
+        
+    # Adding the Urls into the URL model
+        for item in response['items']:
+            add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}")
+
+else:
+    def search_videos_and_add_to_db(query, video_amount = 50):
+        '''
+        This function mocks the search_videos_and_add_to_db function
+        '''
+        print("MOCK SEARCH")
+        pass
 
 def add_keyword_to_Query(Keyword):
     '''
