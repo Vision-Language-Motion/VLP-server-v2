@@ -6,12 +6,12 @@ FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 ARG AUTH_PASSWORD
 ARG DO_DATABASE_PASSWORD
 ARG GOOGLE_DEV_API_KEY=""
-ARG RAPIDAPI_KEY=""
+ARG COHERE_API_KEY=""
 ARG DEBUG="True"
 ENV DO_DATABASE_PASSWORD=$DO_DATABASE_PASSWORD
 ENV AUTH_PASSWORD=$AUTH_PASSWORD
 ENV GOOGLE_DEV_API_KEY=$GOOGLE_DEV_API_KEY
-ENV RAPIDAPI_KEY = $RAPIDAPI_KEY
+ENV COHERE_API_KEY = $COHERE_API_KEY
 ENV DEBUG=$DEBUG
 
 
@@ -36,7 +36,7 @@ RUN python -c 'import mmcv;print(mmcv.__version__)'
 
 RUN pip install importlib-metadata==4.13.0
 
-RUN pip install Django djangorestframework python-dotenv gunicorn psycopg2-binary whitenoise celery==5.1.0 django-celery-beat redis yt-dlp moviepy scenedetect google-api-python-client
+RUN pip install Django djangorestframework python-dotenv gunicorn psycopg2-binary whitenoise celery==5.1.0 django-celery-beat redis yt-dlp moviepy scenedetect google-api-python-client cohere
 
 
 
