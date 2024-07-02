@@ -1,10 +1,12 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Video, Query
+from rest_framework.pagination import PageNumberPagination
+from .models import Video, Query, Prediction, VideoTimeStamps
 from .forms import FileUploadForm
-from .serializers import VideoSerializer
+from .serializers import VideoSerializer, PredictionSerializer, QuerySerializer, VideoTimeStampsSerializer, GroupedPredictionSerializer
 from .helpers import add_keyword_to_Query
+from django.db.models import Prefetch
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
@@ -14,6 +16,7 @@ from datetime import datetime
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
+    pagination_class = PageNumberPagination
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -49,3 +52,36 @@ def extract_keywords_from_file(uploaded_file):
     content = uploaded_file.read().decode('utf-8')
     keywords = content.split(',')  # Split content into keywords (assuming comma-separated)
     return keywords
+
+class QueryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Query.objects.all()
+    serializer_class = QuerySerializer
+    pagination_class = PageNumberPagination
+
+class PredictionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Prediction.objects.all()
+    serializer_class = PredictionSerializer
+    pagination_class = PageNumberPagination
+
+class TimeStampViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = VideoTimeStamps.objects.all()
+    serializer_class = VideoTimeStampsSerializer
+    pagination_class = PageNumberPagination
+
+class GroupedPredictionViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = GroupedPredictionSerializer
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        # Fetch unique video timestamps, ensuring each has a related video
+        return VideoTimeStamps.objects.select_related('video').distinct('video')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
