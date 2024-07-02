@@ -200,3 +200,16 @@ def add_keyword_to_Query(Keyword):
     (default: use_counter = 0, quality metric = 0)
     '''
     keyword_instance, created = Query.objects.get_or_create(keyword=Keyword, defaults={"last_processed": datetime(1, 1, 1, 0, 0)})
+
+def remove_keyword_from_Query(keyword):
+    '''
+    This function removes a keyword from the Query model.
+    '''
+    try:
+        # Try to get the keyword instance from the Query model
+        keyword_instance = Query.objects.get(keyword=keyword)
+        # If found, delete the instance
+        keyword_instance.delete()
+    except Query.DoesNotExist:
+        # If the keyword does not exist in the Query model, do nothing 
+        pass
