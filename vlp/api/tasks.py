@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def query_search():
     logger.warn("Searching for videos with  first 100 Keywords in Query")
     # Subquery to get the top 100 keywords' IDs
-    top_100_keywords = Query.objects.order_by('use_counter', 'last_processed')[:100]
+    top_100_keywords = Query.objects.order_by('last_processed', 'use_counter')[:100]
     logger.warning(top_100_keywords)
     logger.warning("Subquery with top 100 Keywords")
     for keyword in top_100_keywords:
