@@ -204,3 +204,8 @@ CELERY_BEAT_SCHEDULE = {
         # 'schedule': 10,  # Run every 10 seconds
     },
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50
+}
