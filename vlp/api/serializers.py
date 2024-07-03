@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video, VideoTimeStamps, Prediction, Query
+from .models import Video, VideoTimeStamps, Prediction, Query, URL
 from server.settings import AUTH_PASSWORD_FOR_REQUESTS
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -77,3 +77,8 @@ class GroupedPredictionSerializer(serializers.ModelSerializer):
         video_timestamps = VideoTimeStamps.objects.filter(video=obj.video)
         predictions = Prediction.objects.filter(video_timestamp__in=video_timestamps)
         return CustomPredictionSerializer(predictions, many=True).data
+
+class URLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = URL
+        fields = ['url', 'is_processed']
