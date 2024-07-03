@@ -47,6 +47,7 @@ class URL(models.Model):
 
     is_processed = models.BooleanField(default=False)
 
+    came_from_keyword = models.ForeignKey('Query', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.url + " " + str(self.is_processed) + " " + str(self.id)

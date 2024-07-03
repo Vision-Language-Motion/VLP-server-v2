@@ -135,24 +135,32 @@ def detect_video_scenes(input_video_path, threshold=30.0):
 
 
 
-def add_urls_to_db(urls):
+def add_urls_to_db(urls, query=None):
     # Fetch existing URLs
     existing_urls = URL.objects.filter(url__in=urls).values_list('url', flat=True)
 
     # Determine new URLs to be added
     new_urls = set([url for url in urls if url not in existing_urls]) # set for no duplicates
 
-    # Bulk create new URL objects
-    with transaction.atomic():
-        URL.objects.bulk_create([URL(url=url) for url in new_urls])
+    if query:
+        # Fetch the query object
+        query_obj = Query.objects.get(keyword=query)
+
+        # Bulk create new URL objects with the query
+        with transaction.atomic():
+            URL.objects.bulk_create([URL(url=url, came_from_keyword=query_obj) for url in new_urls])
+    else:
+        # Bulk create new URL objects
+        with transaction.atomic():
+            URL.objects.bulk_create([URL(url=url) for url in new_urls])
 
     # Fetch all URLs after insertion
-    all_urls = URL.objects.filter(url__in=urls)
-    response_data = [{'id': url.id, 'url': url.url} for url in all_urls]
+    # all_urls = URL.objects.filter(url__in=urls)
+    # response_data = [{'id': url.id, 'url': url.url} for url in all_urls]
 
 
-def add_url_to_db(url):
-    add_urls_to_db([url])
+def add_url_to_db(url, query=None):
+    add_urls_to_db([url], query=query)
 
 
 def mock_search_videos_and_add_to_db(query, video_amount = 50):
@@ -184,7 +192,7 @@ if not DEBUG:
         
     # Adding the Urls into the URL model
         for item in response['items']:
-            add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}")
+            add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}", query=query)
 
 else:
     def search_videos_and_add_to_db(query, video_amount = 50):
