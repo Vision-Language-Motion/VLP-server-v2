@@ -2,9 +2,9 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from .models import Video, Query, Prediction, VideoTimeStamps
+from .models import Video, Query, Prediction, VideoTimeStamps, URL
 from .forms import FileUploadForm
-from .serializers import VideoSerializer, PredictionSerializer, QuerySerializer, VideoTimeStampsSerializer, GroupedPredictionSerializer
+from .serializers import VideoSerializer, PredictionSerializer, QuerySerializer, VideoTimeStampsSerializer, GroupedPredictionSerializer, URLSerializer
 from .helpers import add_keyword_to_Query
 from django.db.models import Prefetch
 from django.views.decorators.csrf import csrf_exempt
@@ -85,3 +85,8 @@ class GroupedPredictionViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+class URLViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = URL.objects.all()
+    serializer_class = URLSerializer
+    pagination_class = PageNumberPagination
