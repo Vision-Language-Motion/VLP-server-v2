@@ -390,7 +390,7 @@ def fetch_timestamps(print_output=False):
 
 
 if __name__ == "__main__":
-    MAX_NUMBER_OF_ROWS = 500
+    MAX_NUMBER_OF_ROWS = 100
 
     # Definining download directory
     download_directory = os.path.join(os.getcwd(), 'youtube-downloads')
