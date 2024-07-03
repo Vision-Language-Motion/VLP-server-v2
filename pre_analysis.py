@@ -390,6 +390,8 @@ def fetch_timestamps(print_output=False):
 
 
 if __name__ == "__main__":
+    MAX_NUMBER_OF_ROWS = 500
+
     # Definining download directory
     download_directory = os.path.join(os.getcwd(), 'youtube-downloads')
     os.makedirs(download_directory, exist_ok=True)
@@ -398,6 +400,8 @@ if __name__ == "__main__":
     # add_new_url(new_youtube_url)
     # make_test_url_false()
     rows = get_unprocessed_rows()
+    rows = rows[:MAX_NUMBER_OF_ROWS]
+
     for row in rows:
         url = row[1]
         file_path = download_video(url)
