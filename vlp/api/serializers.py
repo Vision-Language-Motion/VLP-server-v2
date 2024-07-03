@@ -37,8 +37,8 @@ class VideoSerializer(serializers.ModelSerializer):
 class QuerySerializer(serializers.ModelSerializer):
     class Meta:
         model = Query
-        fields = ['keyword', 'last_processed', 'use_counter']
-        read_only_fields = ['last_processed', 'use_counter']
+        fields = ['keyword', 'last_processed', 'use_counter', 'quality_metric']
+        read_only_fields = ['last_processed', 'use_counter', 'quality_metric']
 
 class VideoTimeStampsSerializer(serializers.ModelSerializer):
     video_url = serializers.CharField(source='video.url', read_only=True)
@@ -81,4 +81,4 @@ class GroupedPredictionSerializer(serializers.ModelSerializer):
 class URLSerializer(serializers.ModelSerializer):
     class Meta:
         model = URL
-        fields = ['url', 'is_processed']
+        fields = ['url', 'is_processed', 'came_from_keyword']
