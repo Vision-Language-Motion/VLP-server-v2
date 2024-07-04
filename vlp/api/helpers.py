@@ -1,6 +1,6 @@
 import os
 import yt_dlp as youtube_dl
-from server.settings import BASE_DIR, GOOGLE_DEV_API_KEY
+from server.settings import BASE_DIR, GOOGLE_DEV_API_KEY, DEBUG
 from moviepy.editor import VideoFileClip
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
@@ -13,8 +13,6 @@ from datetime import datetime
 # Definining download directory
 download_directory = os.path.join(BASE_DIR,'youtube-downloads')
 
-# Create a service object for interacting with the API
-youtube = build('youtube', 'v3', developerKey = GOOGLE_DEV_API_KEY)
 
 # Download
 def download_video(url):
@@ -137,24 +135,32 @@ def detect_video_scenes(input_video_path, threshold=30.0):
 
 
 
-def add_urls_to_db(urls):
+def add_urls_to_db(urls, query=None):
     # Fetch existing URLs
     existing_urls = URL.objects.filter(url__in=urls).values_list('url', flat=True)
 
     # Determine new URLs to be added
     new_urls = set([url for url in urls if url not in existing_urls]) # set for no duplicates
 
-    # Bulk create new URL objects
-    with transaction.atomic():
-        URL.objects.bulk_create([URL(url=url) for url in new_urls])
+    if query:
+        # Fetch the query object
+        query_obj = Query.objects.get(keyword=query)
+
+        # Bulk create new URL objects with the query
+        with transaction.atomic():
+            URL.objects.bulk_create([URL(url=url, came_from_keyword=query_obj) for url in new_urls])
+    else:
+        # Bulk create new URL objects
+        with transaction.atomic():
+            URL.objects.bulk_create([URL(url=url) for url in new_urls])
 
     # Fetch all URLs after insertion
-    all_urls = URL.objects.filter(url__in=urls)
-    response_data = [{'id': url.id, 'url': url.url} for url in all_urls]
+    # all_urls = URL.objects.filter(url__in=urls)
+    # response_data = [{'id': url.id, 'url': url.url} for url in all_urls]
 
 
-def add_url_to_db(url):
-    add_urls_to_db([url])
+def add_url_to_db(url, query=None):
+    add_urls_to_db([url], query=query)
 
 
 def mock_search_videos_and_add_to_db(query, video_amount = 50):
@@ -164,26 +170,37 @@ def mock_search_videos_and_add_to_db(query, video_amount = 50):
     pass
 
 
-def search_videos_and_add_to_db(query, video_amount = 50):
-    '''
-    Accepts a query and video_amount (default: 50) to use the youtube API to search for videos 
-    and then fills them into the URL model as unprocessed videos
-    '''
+if not DEBUG:
+    # Create a service object for interacting with the API
+    youtube = build('youtube', 'v3', developerKey = GOOGLE_DEV_API_KEY)
 
-    # Make a request to the API's search.list method to retrieve videos
-    request = youtube.search().list(
-        part ='snippet',
-        q = query,
-        type = 'video',
-        maxResults = video_amount
-    )
-    
-    response = request.execute()
-    
-   # Adding the Urls into the URL model
-    for item in response['items']:
-        add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}")
+    def search_videos_and_add_to_db(query, video_amount = 50):
+        '''
+        Accepts a query and video_amount (default: 50) to use the youtube API to search for videos 
+        and then fills them into the URL model as unprocessed videos
+        '''
 
+        # Make a request to the API's search.list method to retrieve videos
+        request = youtube.search().list(
+            part ='snippet',
+            q = query,
+            type = 'video',
+            maxResults = video_amount
+        )
+        
+        response = request.execute()
+        
+    # Adding the Urls into the URL model
+        for item in response['items']:
+            add_url_to_db(f"https://www.youtube.com/watch?v={item['id']['videoId']}", query=query)
+
+else:
+    def search_videos_and_add_to_db(query, video_amount = 50):
+        '''
+        This function mocks the search_videos_and_add_to_db function
+        '''
+        print("MOCK SEARCH")
+        pass
 
 def add_keyword_to_Query(Keyword):
     '''
@@ -191,3 +208,16 @@ def add_keyword_to_Query(Keyword):
     (default: use_counter = 0, quality metric = 0)
     '''
     keyword_instance, created = Query.objects.get_or_create(keyword=Keyword, defaults={"last_processed": datetime(1, 1, 1, 0, 0)})
+
+def remove_keyword_from_Query(keyword):
+    '''
+    This function removes a keyword from the Query model.
+    '''
+    try:
+        # Try to get the keyword instance from the Query model
+        keyword_instance = Query.objects.get(keyword=keyword)
+        # If found, delete the instance
+        keyword_instance.delete()
+    except Query.DoesNotExist:
+        # If the keyword does not exist in the Query model, do nothing 
+        pass

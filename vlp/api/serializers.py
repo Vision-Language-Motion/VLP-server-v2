@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video
+from .models import Video, VideoTimeStamps, Prediction, Query, URL
 from server.settings import AUTH_PASSWORD_FOR_REQUESTS
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -33,3 +33,57 @@ class VideoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid password.")
         validated_data.pop('password', None)  
         return super().create(validated_data)
+    
+class QuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Query
+        fields = ['keyword', 'last_processed', 'use_counter', 'quality_metric']
+        read_only_fields = ['last_processed', 'use_counter', 'quality_metric']
+
+class VideoTimeStampsSerializer(serializers.ModelSerializer):
+    video_url = serializers.CharField(source='video.url', read_only=True)
+    class Meta:
+        model = VideoTimeStamps
+        fields = ['video_url', 'start_time', 'end_time']
+
+class PredictionSerializer(serializers.ModelSerializer):
+    video_timestamp = VideoTimeStampsSerializer()
+
+    class Meta:
+        model = Prediction
+        fields = ['video_timestamp', 'prediction']
+
+class CustomVideoTimeStampsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoTimeStamps
+        fields = ['start_time', 'end_time']
+
+class CustomPredictionSerializer(serializers.ModelSerializer):
+    video_timestamp = CustomVideoTimeStampsSerializer()
+
+    class Meta:
+        model = Prediction
+        fields = ['video_timestamp', 'prediction']
+
+class GroupedPredictionSerializer(serializers.ModelSerializer):
+    video_url = serializers.CharField(source='video.url', read_only=True)
+    predictions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VideoTimeStamps
+        fields = ['video_url', 'predictions']
+
+    def get_predictions(self, obj):
+        video_timestamps = VideoTimeStamps.objects.filter(video=obj.video)
+        predictions = Prediction.objects.filter(video_timestamp__in=video_timestamps)
+        return CustomPredictionSerializer(predictions, many=True).data
+
+class URLSerializer(serializers.ModelSerializer):
+    came_from_keyword = serializers.SerializerMethodField()
+
+    class Meta:
+        model = URL
+        fields = ['url', 'is_processed', 'came_from_keyword']
+
+    def get_came_from_keyword(self, obj):
+        return obj.came_from_keyword.keyword if obj.came_from_keyword else None

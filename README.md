@@ -23,7 +23,6 @@ We have a Query model of Keywords with a use counter and a last processed timest
 docker build --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env | cut -d '=' -f2) \
              --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2) \
              --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2) \
-             --build-arg COHERE_API_KEY=$(grep COHERE_API_KEY .env | cut -d '=' -f2) \
              --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2) \
              -t prodbuild .
 ```
@@ -34,11 +33,19 @@ then
 ### How to run tests
 
 ```bash
-docker build --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env | cut -d '=' -f2)              --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2) --build-arg TEST="true"   --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2)     --build-arg COHERE_API_KEY=$(grep COHERE_API_KEY .env | cut -d '=' -f2)     --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2)    -t testbuild .
+docker build --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env | cut -d '=' -f2) \
+             --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2)  \
+             --build-arg TEST="true"  \
+             --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2) \
+             --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2)
+             -t testbuild .
 ```
+
+
+
 
 ### Write log to file
 
 ```bash
-docker build  --progress=plain  --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env | cut -d '=' -f2)              --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2) --build-arg TEST="true"   --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2)        --build-arg COHERE_API_KEY=$(grep COHERE_API_KEY .env | cut -d '=' -f2)     --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2)    -t    testbuild . >& build.log
+docker build  --progress=plain  --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env | cut -d '=' -f2)              --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2) --build-arg TEST="true"   --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2)        --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2)    -t    testbuild . >& build.log
 ```

@@ -25,7 +25,6 @@ ENV = os.environ.get('ENVIRONMENT', 'production')
 DO_DATABASE_PASSWORD = os.environ.get('DO_DATABASE_PASSWORD', None)
 AUTH_PASSWORD_FOR_REQUESTS = os.environ.get('AUTH_PASSWORD', None)
 GOOGLE_DEV_API_KEY = os.environ.get('GOOGLE_DEV_API_KEY', None)
-COHERE_API_KEY = os.environ.get('COHERE_API_KEY', None)
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -205,4 +204,9 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 3600*24,  # Run every 24hours
         # 'schedule': 10,  # Run every 10 seconds
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50
 }

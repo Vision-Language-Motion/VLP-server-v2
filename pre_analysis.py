@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import yt_dlp as youtube_dl
+from pytube import YouTube
 import psycopg2
 from psycopg2.extras import execute_values
 from scenedetect import open_video, SceneManager
@@ -75,7 +76,7 @@ def connect_and_retrieve(query):
             cursor.close()
             connection.close()
 
-def get_unprocessed_rows():
+def get_unprocessed_rows(print_rows=True):
     try:
         # Establish a connection to the database
         connection = psycopg2.connect(**db_params)
@@ -94,8 +95,9 @@ def get_unprocessed_rows():
         rows = cursor.fetchall()
 
         # Print the rows
-        for row in rows:
-            print(row)
+        if print_rows:
+            for row in rows:
+                print(row)
 
         return rows
 
@@ -200,6 +202,29 @@ def add_new_url(youtube_url):
             cursor.close()
             connection.close()
 
+def download_video_pytube(url):
+    """
+    This function downloads the video using pytube module into the download_directory.
+    The video is saved in the best quality available up to 720p.
+    """
+    # Create a YouTube object
+    yt = YouTube(url)
+    
+    # Filter streams to get the best quality video up to 720p
+    stream = yt.streams.filter(progressive=True, file_extension='mp4', res='720p').first()
+    
+    # If no 720p video is found, get the highest resolution below 720p
+    if not stream:
+        stream = yt.streams.filter(progressive=True, file_extension='mp4', res='480p').first()
+    
+    # If no 360p video is found, get the highest resolution below 720p
+    if not stream:
+        stream = yt.streams.filter(progressive=True, file_extension='mp4', res='360p').first()
+
+    # Download the video
+    file_path = stream.download(output_path=download_directory, filename=f'{yt.video_id}.mp4')
+    
+    return file_path
 
 
 # Download
@@ -390,6 +415,8 @@ def fetch_timestamps(print_output=False):
 
 
 if __name__ == "__main__":
+    MAX_NUMBER_OF_ROWS = 100
+
     # Definining download directory
     download_directory = os.path.join(os.getcwd(), 'youtube-downloads')
     os.makedirs(download_directory, exist_ok=True)
@@ -397,11 +424,17 @@ if __name__ == "__main__":
     # new_youtube_url = 'https://www.youtube.com/shorts/MkzFodsSOHc'  # insert url here
     # add_new_url(new_youtube_url)
     # make_test_url_false()
-    rows = get_unprocessed_rows()
+    rows = get_unprocessed_rows(print_rows=False)
+    rows = rows[:MAX_NUMBER_OF_ROWS]
+
     for row in rows:
-        url = row[1]
-        file_path = download_video(url)
-        update_processed_rows_by_url(url)
+        try:
+            url = row[1]
+            file_path = download_video(url)
+            update_processed_rows_by_url(url)
+        except:
+            update_processed_rows_by_url(url)  # the video has an error, so we mark it as processed and
+            continue    
         scenes = detect_video_scenes(file_path)
         add_multiple_timestamps(row[0], scenes)
     

@@ -67,7 +67,7 @@ def process_video(video_path, base_output_dir):
     # Detect scenes in the video
     video_manager = VideoManager([video_path])
     scene_manager = SceneManager()
-    scene_manager.add_detector(ContentDetector(threshold=28))
+    scene_manager.add_detector(ContentDetector(threshold=30))
     video_manager.set_downscale_factor()
     video_manager.start()
     scene_manager.detect_scenes(frame_source=video_manager)
@@ -84,7 +84,7 @@ def process_video(video_path, base_output_dir):
         start_frame, end_frame = scene[0].get_frames(), scene[1].get_frames()
 
         scene_duration = (end_frame - start_frame) / cap.get(cv2.CAP_PROP_FPS)
-        if scene_duration < 2:
+        if scene_duration < 5:
             continue
         
         frame_count = 0
