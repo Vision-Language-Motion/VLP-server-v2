@@ -82,3 +82,6 @@ class URLSerializer(serializers.ModelSerializer):
     class Meta:
         model = URL
         fields = ['url', 'is_processed', 'came_from_keyword']
+
+    def get_came_from_keyword(self, obj):
+        return obj.came_from_keyword.keyword if obj.came_from_keyword else None
