@@ -4,8 +4,9 @@ from server.settings import BASE_DIR, GOOGLE_DEV_API_KEY, DEBUG
 from moviepy.editor import VideoFileClip
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
-from .models import URL, Query
+from .models import URL, Query, VideoTimeStamps, Prediction
 from django.db import transaction
+from django.db.models import Max
 from googleapiclient.discovery import build
 from datetime import datetime
 
@@ -221,3 +222,66 @@ def remove_keyword_from_Query(keyword):
     except Query.DoesNotExist:
         # If the keyword does not exist in the Query model, do nothing 
         pass
+
+def calculate_keyword_metrics(keywords=[]):
+    '''
+    This function calculates the quality metric for a given list or all keywords
+    input: limited list of keywords (default or empty list calculates all keywords)
+    '''
+    keywords = [keyword.lower().strip() for keyword in keywords] # normalize keywords
+    # Step 1: Filter queries based on provided keywords or select all queries
+    if keywords:
+        queries = Query.objects.filter(keyword__in=keywords)
+    else:
+        queries = Query.objects.all()
+
+    for query in queries:
+        urls = URL.objects.filter(came_from_keyword=query)
+        total_video_length = 0
+        weighted_usable_material = 0
+
+        for url in urls:
+            video_timestamps = VideoTimeStamps.objects.filter(video=url)
+            
+            if not video_timestamps.exists():
+                continue
+
+            # Get the total video length using the end time of the last timestamp
+            total_video_length = video_timestamps.aggregate(
+                max_end_time=Max('end_time')
+            )['max_end_time'] or 0
+
+            # Get all predictions and calculate the weighted usable material
+            for timestamp in video_timestamps:
+                prediction = Prediction.objects.filter(video_timestamp=timestamp).first()
+                
+                if prediction:
+                    if prediction.prediction == 'sh':
+                        weight = 1
+                    elif prediction.prediction in ['mu', 'sm']:
+                        weight = 0.7
+                    elif prediction.prediction == 'sl':
+                        weight = 0.3
+                    else:
+                        weight = 0  # Default weight if prediction is None or doesn't match any known categories
+
+                    segment_length = timestamp.end_time - timestamp.start_time
+                    weighted_usable_material += segment_length * weight
+
+        # Calculate the final quality metric for the query, adjust if necessary
+        if total_video_length > 0:
+            quality_metric = weighted_usable_material / total_video_length
+        else:
+            quality_metric = 0
+
+        # Update the query's quality_metric field
+        query.quality_metric = quality_metric
+        query.save(update_fields=['quality_metric'])
+
+    print("Quality metrics updated for specified keywords.")
+
+def generate_new_keywords():
+    '''
+    This function generates the new keywords and adds them to the Query model
+    '''
+    pass

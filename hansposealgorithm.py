@@ -84,7 +84,7 @@ def process_video(video_path, base_output_dir):
         start_frame, end_frame = scene[0].get_frames(), scene[1].get_frames()
 
         scene_duration = (end_frame - start_frame) / cap.get(cv2.CAP_PROP_FPS)
-        if scene_duration < 5:
+        if scene_duration < 5: # skip scenes shorter than 5 seconds
             continue
         
         frame_count = 0
@@ -106,11 +106,12 @@ def process_video(video_path, base_output_dir):
         # classify after number of human figure(single, multiple, nohuman)
         if all(count == 0 for count in people_counts):
             classification = 'nh'  # nh
-        elif any(count > 1 for count in people_counts):
+        elif any(count > 1 for count in people_counts): # classify as multiple if more than 1 person is visible in any frame
             classification = 'mu' # multiple
         else:
             classification = 'si' # single
             # further subdivision in single category
+            # if 3 consecutive seconds have high visibility, classify as single high, etc.
             high_count = sum(1 for i in range(len(frame_qualities) - 2) if all(q == "high" for q in frame_qualities[i:i+3]))
             medium_count = sum(1 for i in range(len(frame_qualities) - 2) if all(q in ["medium", "high"] for q in frame_qualities[i:i+3]))
             if high_count > 0:

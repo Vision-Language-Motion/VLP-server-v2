@@ -51,7 +51,8 @@ class URL(models.Model):
 
     def __str__(self):
         return self.url + " " + str(self.is_processed) + " " + str(self.id)
-    
+
+
 class VideoTimeStamps(models.Model):
     # Store the video
     video = models.ForeignKey(URL, on_delete=models.CASCADE)
@@ -64,6 +65,7 @@ class VideoTimeStamps(models.Model):
 
     def __str__(self):
         return self.video.url + " " + str(self.start_time) + " " + str(self.end_time)
+
 
 class Query(models.Model):
     
@@ -93,7 +95,8 @@ class Query(models.Model):
     class Meta:
         ordering = ['-last_processed', 'use_counter']
         unique_together = ('keyword',)  
-    
+
+
 class Prediction(models.Model):
     video_timestamp = models.ForeignKey(VideoTimeStamps, on_delete=models.CASCADE)
 
