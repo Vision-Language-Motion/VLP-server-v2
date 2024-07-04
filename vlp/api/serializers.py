@@ -79,6 +79,8 @@ class GroupedPredictionSerializer(serializers.ModelSerializer):
         return CustomPredictionSerializer(predictions, many=True).data
 
 class URLSerializer(serializers.ModelSerializer):
+    came_from_keyword = serializers.SerializerMethodField()
+
     class Meta:
         model = URL
         fields = ['url', 'is_processed', 'came_from_keyword']
