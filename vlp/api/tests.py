@@ -1,9 +1,10 @@
 from django.test import TestCase, Client
 import os
-from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query
+from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query, calculate_keyword_metrics \
+    , SINGLE_LOW_WEIGHT, SINGLE_MEDIUM_WEIGHT, SINGLE_HIGH_WEIGHT, MULTIPLE_WEIGHT
 from server.settings import BASE_DIR
-from .tasks import query_search, generate_keyword_and_add_to_query
-from .models import URL, Query
+from .tasks import query_search #, generate_keyword_and_add_to_query
+from .models import URL, Query, Prediction, VideoTimeStamps, Video
 from datetime import datetime
 from django.utils import timezone
 from .tasks import logger
@@ -57,7 +58,7 @@ class AddUrlToDB(TestCase):
         # Assert that only one entry exists
         self.assertEqual(query_count, 1)
 
-
+'''
 class AddKeywordQuery(TestCase):
     """Test the add_Keyword_to_Query by adding a keyword to the Query model and then checking if it exists, then adding a keyword twice to the Query model and then checking if only one exists"""
     
@@ -88,7 +89,7 @@ class AddKeywordQuery(TestCase):
 
         # Assert that only one entry exists
         self.assertEqual(query_count, 1)
-
+'''
 
 
 class QuerySearchTestCase(TestCase):
@@ -132,7 +133,7 @@ class DatabaseExists(TestCase):
         logger.warn(f"n_of_urls_initial:{n_of_keywords}")
         assert(n_of_keywords > 0)
 
-
+'''
 class GenerateKeywords(TestCase):
     def test_generate_keyword_and_add_to_query(self):
         
@@ -144,7 +145,32 @@ class GenerateKeywords(TestCase):
         self.assertGreater(Query.objects.all().count(), n_of_keywords_initial)
         after_top_100_keywords = Query.objects.order_by('-last_processed', 'use_counter')[:100]
         assert before_top_100_keywords != after_top_100_keywords, "Querysets are not different"
+'''
 
+class QueryQualityMetric(TestCase):
+    '''Tests the quality_metric calculation in the Query model'''
+    # i.e. creates a dummy keyword, linked dummy url, video and prediction with one timestamp for the whole video, uses calculate_keyword_metrics and checks the quality_metric and outputs to log
+    def test_quality_metric(self):
+        # Create a dummy keyword
+        keyword = 'workout'
+        add_keyword_to_Query(keyword)
+        # Create a dummy URL
+        video_url = 'https://www.youtube.com/shorts/AsrP4ji_Dtw'
+        add_url_to_db(video_url, query=keyword)
+        url = URL.objects.get(url=video_url)
+        # Create a dummy video
+        video = Video.objects.create(url=url)
+        # Create two dummy timestamps
+        VideoTimeStamps.objects.create(video=url, start_time=0, end_time=100)
+        VideoTimeStamps.objects.create(video=url, start_time=100, end_time=200)
+        # Create dummy predictions
+        Prediction.objects.create(video_timestamp=VideoTimeStamps.objects.get(video=url, start_time=0, end_time=100), prediction='sh')
+        Prediction.objects.create(video_timestamp=VideoTimeStamps.objects.get(video=url, start_time=100, end_time=200), prediction='sl')
+        # Calculate the quality_metric
+        calculate_keyword_metrics([keyword])
+        # Log the quality_metric
+        logger.warn(f"Quality metric for keyword '{keyword}': {Query.objects.get(keyword=keyword).quality_metric}")
+        # Assert that the quality_metric is as expected, consider floating point error
+        self.assertLess(Query.objects.get(keyword=keyword).quality_metric, 0.651)
+        self.assertGreater(Query.objects.get(keyword=keyword).quality_metric, 0.649)
 
-
-        

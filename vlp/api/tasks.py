@@ -6,7 +6,6 @@ from .models import Query, Video, URL
 from django.utils import timezone
 from django.db.models import F,Subquery, OuterRef
 from server.settings import AUTH_PASSWORD_FOR_REQUESTS, DEBUG
-import cohere
 from googleapiclient.errors import HttpError
 
 import requests

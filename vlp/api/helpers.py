@@ -223,6 +223,11 @@ def remove_keyword_from_Query(keyword):
         # If the keyword does not exist in the Query model, do nothing 
         pass
 
+SINGLE_HIGH_WEIGHT = 1
+SINGLE_MEDIUM_WEIGHT = 0.7
+SINGLE_LOW_WEIGHT = 0.3
+MULTIPLE_WEIGHT = 0.7
+
 def calculate_keyword_metrics(keywords=[]):
     '''
     This function calculates the quality metric for a given list or all keywords
@@ -255,15 +260,20 @@ def calculate_keyword_metrics(keywords=[]):
             for timestamp in video_timestamps:
                 prediction = Prediction.objects.filter(video_timestamp=timestamp).first()
                 
+                #prediction switch case:
                 if prediction:
                     if prediction.prediction == 'sh':
-                        weight = 1
-                    elif prediction.prediction in ['mu', 'sm']:
-                        weight = 0.7
+                        weight = SINGLE_HIGH_WEIGHT
+                    elif prediction.prediction == 'sm':
+                        weight = SINGLE_MEDIUM_WEIGHT
                     elif prediction.prediction == 'sl':
-                        weight = 0.3
+                        weight = SINGLE_LOW_WEIGHT
+                    elif prediction.prediction == 'mu':
+                        weight = MULTIPLE_WEIGHT
                     else:
-                        weight = 0  # Default weight if prediction is None or doesn't match any known categories
+                        weight = 0
+                
+
 
                     segment_length = timestamp.end_time - timestamp.start_time
                     weighted_usable_material += segment_length * weight
