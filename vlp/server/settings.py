@@ -204,6 +204,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 3600*24,  # Run every 24hours
         # 'schedule': 10,  # Run every 10 seconds
     },
+    'keyword-metrics-every-24-hours': {
+        'task': 'api.tasks.keyword_metrics_task',
+        
+        'schedule': 3600*24,  # Run every 24hours
+        # 'schedule': 10,  # Run every 10 seconds
+    }
 }
 
 REST_FRAMEWORK = {

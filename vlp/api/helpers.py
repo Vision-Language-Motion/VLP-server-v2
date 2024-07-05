@@ -234,18 +234,23 @@ def calculate_keyword_metrics(keywords=[]):
     input: limited list of keywords (default or empty list calculates all keywords)
     '''
     keywords = [keyword.lower().strip() for keyword in keywords] # normalize keywords
-    # Step 1: Filter queries based on provided keywords or select all queries
+    # Step 1: Filter queries based on provided keywords or select all queries if keywords is none or empty
     if keywords:
         queries = Query.objects.filter(keyword__in=keywords)
     else:
         queries = Query.objects.all()
 
     for query in queries:
+        if query.use_counter == 0:
+            # Skip queries with no use_counter
+            continue
         urls = URL.objects.filter(came_from_keyword=query)
         total_video_length = 0
         weighted_usable_material = 0
 
         for url in urls:
+            if url.is_processed == False:
+                continue
             video_timestamps = VideoTimeStamps.objects.filter(video=url)
             
             if not video_timestamps.exists():
@@ -272,8 +277,6 @@ def calculate_keyword_metrics(keywords=[]):
                         weight = MULTIPLE_WEIGHT
                     else:
                         weight = 0
-                
-
 
                     segment_length = timestamp.end_time - timestamp.start_time
                     weighted_usable_material += segment_length * weight
@@ -286,6 +289,8 @@ def calculate_keyword_metrics(keywords=[]):
 
         # Update the query's quality_metric field
         query.quality_metric = quality_metric
+        #output to log
+        print(f"Quality metric for keyword '{query.keyword}' is {quality_metric}")
         query.save(update_fields=['quality_metric'])
 
     print("Quality metrics updated for specified keywords.")

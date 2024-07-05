@@ -1,7 +1,8 @@
 from celery import shared_task
 from .helpers import download_video, delete_file, create_folder_from_video_path, delete_folder_from_video_path, \
                     take_screenshot_at_second, get_video_file_clip, get_video_duration, get_video_area, \
-                    search_videos_and_add_to_db, detect_video_scenes, mock_search_videos_and_add_to_db, add_keyword_to_Query
+                    search_videos_and_add_to_db, detect_video_scenes, mock_search_videos_and_add_to_db, add_keyword_to_Query, \
+                    calculate_keyword_metrics
 from .models import Query, Video, URL
 from django.utils import timezone
 from django.db.models import F,Subquery, OuterRef
@@ -46,7 +47,11 @@ def query_search():
             keyword.update_used_keyword()
             keyword.save()  # I think we can delete this line
         logger.warning(f"Keyword '{keyword.keyword}' queried and urls added to db")
-    
+
+# Calculates the keyword metrics for all keywords
+@shared_task
+def keyword_metrics_task():
+    calculate_keyword_metrics()
 
 '''
 @shared_task
