@@ -214,6 +214,9 @@ def insert_prediction_to_db(video_id, start_time, end_time, prediction):
 for result in all_results:
     insert_prediction_to_db(result[0], result[1], result[2], result[3])
 
+# delete video folder at the end
+shutil.rmtree(video_folder)
+
 #with open(os.path.join(base_output_dir, 'predictions.csv'), mode='w+', newline='') as csv_file:
 #    csv_writer = csv.writer(csv_file)
 #    csv_writer.writerow(['Video Name', 'Start Time (s)', 'End Time (s)', 'Classification'])
