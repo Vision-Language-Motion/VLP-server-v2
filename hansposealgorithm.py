@@ -148,9 +148,75 @@ for video_file in os.listdir(video_folder):
         video_results = process_video(video_path, base_output_dir)
         all_results.extend(video_results)
 
-with open(os.path.join(base_output_dir, 'predictions.csv'), mode='w+', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(['Video Name', 'Start Time (s)', 'End Time (s)', 'Classification'])
-    for result in all_results:
-        csv_writer.writerow(result)
+
+
+from dotenv import load_dotenv
+import os
+import psycopg2
+from psycopg2.extras import execute_values
+load_dotenv()
+
+
+# Database connection parameters
+db_params = {
+    'dbname': 'defaultdb',
+    'user': 'doadmin',
+    'password': os.environ.get('DO_DATABASE_PASSWORD', None),
+    'host': 'vlp-database-docker-do-user-10555764-0.c.db.ondigitalocean.com',
+    'port': '25060'
+}
+
+def insert_prediction_to_db(video_id, start_time, end_time, prediction):
+    try:
+        # Establish a connection to the database
+        connection = psycopg2.connect(**db_params)
+        cursor = connection.cursor()
+
+        # Execute the query
+        cursor.execute("SELECT id FROM api_URL WHERE url LIKE %s", ('%' + video_id + '%',))
+        video_url_result = cursor.fetchone()
+
+        if not video_url_result:
+            print("Video URL not found.")
+            return
+        
+        video_url_id = video_url_result[0]
+         # Step 2: Find the corresponding VideoTimeStamps ID
+        cursor.execute(
+            "SELECT id FROM api_VideoTimeStamps WHERE video_id = %s AND start_time = %s AND end_time = %s",
+            (video_url_id, start_time, end_time)
+        )
+        video_timestamp_result = cursor.fetchone()
+        if not video_timestamp_result:
+            print("VideoTimeStamps entry not found.")
+            return
+
+        video_timestamp_id = video_timestamp_result[0]
+
+        # Step 3: Insert the new prediction
+        cursor.execute(
+            "INSERT INTO api_Prediction (video_timestamp_id, prediction) VALUES (%s, %s)",
+            (video_timestamp_id, prediction)
+        )
+
+        # Commit the transaction
+        connection.commit()
+
+    except (Exception, psycopg2.Error) as error:
+        print(f"Error while connecting to PostgreSQL: {error}")
+
+    finally:
+        # Close the database connection
+        if connection:
+            cursor.close()
+            connection.close()
+
+for result in all_results:
+    insert_prediction_to_db(result[0], result[1], result[2], result[3])
+
+#with open(os.path.join(base_output_dir, 'predictions.csv'), mode='w+', newline='') as csv_file:
+#    csv_writer = csv.writer(csv_file)
+#    csv_writer.writerow(['Video Name', 'Start Time (s)', 'End Time (s)', 'Classification'])
+#    for result in all_results:
+#        csv_writer.writerow(result)
 #'''
