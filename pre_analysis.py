@@ -309,6 +309,9 @@ def detect_video_scenes(input_video_path, threshold=30.0):
         start_time = scene[0].get_seconds()
         end_time = scene[1].get_seconds()
 
+        if (end_time - start_time) < 2:
+            continue
+
         formatted_scene_list.append([start_time, end_time])
     
     return formatted_scene_list
@@ -402,6 +405,6 @@ if __name__ == "__main__":
         url = row[1]
         file_path = download_video(url)
         update_processed_rows_by_url(url)
-        scenes = detect_video_scenes(file_path)
+        scenes = detect_video_scenes(file_path, 28)
         add_multiple_timestamps(row[0], scenes)
     

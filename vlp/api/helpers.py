@@ -200,3 +200,25 @@ def add_keyword_to_Query(Keyword):
     (default: use_counter = 0, quality metric = 0)
     '''
     keyword_instance, created = Query.objects.get_or_create(keyword=Keyword, defaults={"last_processed": datetime(1, 1, 1, 0, 0)})
+
+
+def fix_keywords():
+    """
+    This function finds keywords in the Query model that contain '\n' and splits them into separate keywords.
+    """
+    all_queries = Query.objects.all()
+
+    for query in all_queries:
+        if '\n' in query.keyword:
+            # Split the keyword 
+            split_keywords = query.keyword.split('\n')
+
+            with transaction.atomic():
+                # Remove the original incorrectly formatted keyword
+                query.delete()
+
+                # Add each split keyword to the Query model
+                for keyword in split_keywords:
+                    cleaned_keyword = keyword.strip().lower()
+                    if cleaned_keyword:  # Ensure the keyword is not empty
+                        add_keyword_to_Query(cleaned_keyword)

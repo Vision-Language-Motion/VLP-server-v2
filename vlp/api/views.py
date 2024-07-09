@@ -68,13 +68,17 @@ class TimeStampViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = VideoTimeStampsSerializer
     pagination_class = PageNumberPagination
 
+# custom pagination for grouped pred.
+class GroupedPredictionPagination(PageNumberPagination):
+    page_size = 5
+
 class GroupedPredictionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = GroupedPredictionSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = GroupedPredictionPagination
 
     def get_queryset(self):
         # Fetch unique video timestamps, ensuring each has a related video
-        return VideoTimeStamps.objects.select_related('video').distinct('video')
+        return VideoTimeStamps.objects.filter(prediction__isnull=False).select_related('video').distinct('video')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
