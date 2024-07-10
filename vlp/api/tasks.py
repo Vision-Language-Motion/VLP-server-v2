@@ -1,7 +1,5 @@
 from celery import shared_task
-from .helpers import download_video, delete_file, create_folder_from_video_path, delete_folder_from_video_path, \
-                    take_screenshot_at_second, get_video_file_clip, get_video_duration, get_video_area, \
-                    search_videos_and_add_to_db, detect_video_scenes, mock_search_videos_and_add_to_db
+from .helpers import mock_search_videos_and_add_to_db, search_videos_and_add_to_db
 from .models import Query, Video, URL
 from django.utils import timezone
 from django.db.models import F,Subquery, OuterRef

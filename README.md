@@ -37,7 +37,7 @@ docker build --build-arg DO_DATABASE_PASSWORD=$(grep DO_DATABASE_PASSWORD .env |
              --build-arg AUTH_PASSWORD=$(grep AUTH_PASSWORD .env | cut -d '=' -f2)  \
              --build-arg TEST="true"  \
              --build-arg GOOGLE_DEV_API_KEY=$(grep GOOGLE_DEV_API_KEY .env | cut -d '=' -f2) \
-             --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2)
+             --build-arg DEBUG=$(grep DEBUG .env | cut -d '=' -f2) \
              -t testbuild .
 ```
 

@@ -8,6 +8,10 @@ from .models import URL, Query
 from django.db import transaction
 from googleapiclient.discovery import build
 from datetime import datetime
+from django.db.models import Count
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 # Definining download directory
@@ -221,3 +225,37 @@ def remove_keyword_from_Query(keyword):
     except Query.DoesNotExist:
         # If the keyword does not exist in the Query model, do nothing 
         pass
+
+
+def delete_duplicates_from_model(model,fields = []):
+    """
+    Delete duplicate records from the given model based on specified fields.
+
+    Parameters:
+    model (Django model class): The model class to remove duplicates from.
+    fields (list of str): The list of fields to check for duplicates.
+    """
+    if not fields:
+     logger.warn("No fields Specified")
+     return
+    
+    duplicates = (model.objects
+                 .values(*fields)
+                 .annotate(count=Count('id'))
+                 .filter(count__gt=1))
+    
+    logger.warn("Duplicates:", duplicates)
+    ids_to_delete = []
+    for duplicate in duplicates:
+        # Get IDs of records to delete (all except the first one)
+        ids_to_delete = (model.objects
+                         .filter(**{field: duplicate[field] for field in fields})
+                         .order_by('id')
+                         .values_list('id', flat=True)[1:])
+     
+    if ids_to_delete:
+        logger.warn("ids_to_delete:", ids_to_delete)
+        logger.warn("model instance:", model.objects.filter(id__in=ids_to_delete))
+        # model.objects.filter(id__in=ids_to_delete).delete()
+    else:
+        logger.warn("No duplicates found", duplicates)

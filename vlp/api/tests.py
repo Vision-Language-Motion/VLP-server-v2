@@ -1,9 +1,9 @@
 from django.test import TestCase, Client
 import os
-from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query
+from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query, delete_duplicates_from_model
 from server.settings import BASE_DIR
-from .tasks import process_video_without_human, query_search
-from .models import URL, Query
+from .tasks import query_search
+from .models import URL, Query, VideoTimeStamps, Prediction
 from datetime import datetime
 from django.utils import timezone
 from .tasks import logger
@@ -126,3 +126,14 @@ class DatabaseExists(TestCase):
         n_of_urls_initial = URL.objects.all().count()
         logger.warn(f"n_of_urls_initial:{n_of_urls_initial}")
         assert(n_of_urls_initial > 0)
+
+
+class DeleteDuplicates(TestCase):
+    '''Test Case for'''
+    def test_delete_duplicates_from_model(self):
+        # Making Sure the empy case is getting filtered out
+        delete_duplicates_from_model(VideoTimeStamps, [])
+        logger.warn("Empty case checked")
+        # Testing the function
+        delete_duplicates_from_model(Prediction, ['video_timestamp', 'prediction'])
+
