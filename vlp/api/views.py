@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.pagination import PageNumberPagination
 from .models import Video, Query, Prediction, VideoTimeStamps, URL
 from .forms import FileUploadForm
@@ -11,6 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
 from datetime import datetime
+import re
+
 
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -50,7 +52,7 @@ def upload_file(request):
 
 def extract_keywords_from_file(uploaded_file):
     content = uploaded_file.read().decode('utf-8')
-    keywords = content.split(',')  # Split content into keywords (assuming comma-separated)
+    keywords = re.split(',|\n', content)  # Split content into keywords (assuming comma-separated and accoutnign for newlines)
     return keywords
 
 class QueryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -90,3 +92,43 @@ class URLViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = URL.objects.all()
     serializer_class = URLSerializer
     pagination_class = PageNumberPagination
+
+'''Search view, add ?url=... to the URL to search for a specific URL.
+   i.e. /search/?url=https://www.youtube.com/watch?v=1234567890'''
+class SearchView(viewsets.ReadOnlyModelViewSet):
+    queryset = URL.objects.all()
+    serializer_class = URLSerializer
+    pagination_class = PageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['url']
+
+    def list(self, request, *args, **kwargs):
+        # Apply filtering for search fields
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Check if 'url' parameter is provided in the query parameters
+        url = request.query_params.get('url', None)
+        if url is None:
+            return Response({"error": "URL parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the URL object
+        url_obj = queryset.filter(url=url).first()
+        if url_obj is None:
+            return Response({"error": "URL not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get the associated keyword
+        keyword = url_obj.came_from_keyword.keyword if url_obj.came_from_keyword else None
+
+        # Get the video timestamps
+        video_timestamps = VideoTimeStamps.objects.filter(video=url_obj)
+
+        # Get the predictions
+        predictions = Prediction.objects.filter(video_timestamp__in=video_timestamps)
+
+        # Serialize the data, i.e. only show URL and predictions
+        serializer = URLSerializer(url_obj)
+        data = serializer.data
+        data['keyword'] = keyword
+        data['predictions'] = PredictionSerializer(predictions, many=True).data
+
+        return Response(data)
