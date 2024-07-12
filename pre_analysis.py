@@ -432,7 +432,14 @@ if __name__ == "__main__":
             url = row[1]
             file_path = download_video(url)
             update_processed_rows_by_url(url)
-        except:
+        except youtube_dl.utils.DownloadError:
+            print(f"Error downloading video from URL: {url}. PLEASE UPDATE PACKAGE")
+        except Exception as e:
+                # Check if the exception is a DownloadError
+            if isinstance(e, youtube_dl.utils.DownloadError):
+                print(f"Download error: {e}")
+            else:
+                print(f"An unexpected error occurred: {e}")
             update_processed_rows_by_url(url)  # the video has an error, so we mark it as processed and
             continue    
         scenes = detect_video_scenes(file_path)

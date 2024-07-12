@@ -422,6 +422,52 @@ def fetch_timestamps(print_output=False):
             cursor.close()
             connection.close()
 
+def fetch_and_analyze_timestamps(print_output=False):
+    try:
+        # Establish a connection to the database
+        connection = psycopg2.connect(**db_params)
+        cursor = connection.cursor()
+
+        # SQL query to fetch timestamps for a given video ID
+        fetch_query = """
+        SELECT * 
+        FROM api_videotimestamps
+        """
+        # Execute the fetch query
+        cursor.execute(fetch_query)
+
+        # Fetch all rows
+        rows = cursor.fetchall()
+
+        # Initialize counters for timestamps over and under 5 seconds
+        over_5_seconds = 0
+        under_5_seconds = 0
+
+        # Analyze the timestamps
+        for row in rows:
+            start_time = row[1]
+            end_time = row[2]
+            duration = end_time - start_time
+            if duration > 5:
+                over_5_seconds += 1
+            else:
+                under_5_seconds += 1
+
+        # Print the results
+        if print_output:
+            print(f"Timestamps over 5 seconds: {over_5_seconds}")
+            print(f"Timestamps under 5 seconds: {under_5_seconds}")
+
+        return over_5_seconds, under_5_seconds
+    
+    except (Exception, psycopg2.Error) as error:
+        print(f"Error while connecting to PostgreSQL: {error}")
+
+    finally:
+        # Close the database connection
+        if connection:
+            cursor.close()
+            connection.close()
 
 if __name__ == "__main__":
     # Definining download directory
@@ -431,7 +477,7 @@ if __name__ == "__main__":
     #new_youtube_url = 'https://www.youtube.com/shorts/MkzFodsSOHc'  # insert url here
     #add_new_url(new_youtube_url)
     # make_test_url_false()
-    rows = get_all_rows()
+    # rows = get_all_rows()
     # connect_and_retrieve("SELECT * FROM api_query")
-
+    fetch_and_analyze_timestamps(print_output=True)
     # print(rows)
