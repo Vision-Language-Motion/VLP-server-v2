@@ -5,13 +5,18 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Video, Query, Prediction, VideoTimeStamps, URL
 from .forms import FileUploadForm
 from .serializers import VideoSerializer, PredictionSerializer, QuerySerializer, VideoTimeStampsSerializer, GroupedPredictionSerializer, URLSerializer
-from .helpers import add_keyword_to_Query
+from .helpers import add_keyword_to_Query, add_url_to_db
 from django.db.models import Prefetch
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
 from datetime import datetime
+import plotly.express as px
+import pandas as pd
+from server.settings import DEBUG
 
+import logging
+logger = logging.getLogger(__name__)
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -90,3 +95,65 @@ class URLViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = URL.objects.all()
     serializer_class = URLSerializer
     pagination_class = PageNumberPagination
+
+
+def graph(request):
+
+   #For Testing
+    if DEBUG:
+        add_url_to_db('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        video = URL.objects.get(url='https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        
+        # Create VideoTimeStamps objects
+        timestamps = [
+           VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0),
+           VideoTimeStamps.objects.create(video=video, start_time=10.0, end_time=15.0),
+           VideoTimeStamps.objects.create(video=video, start_time=30.0, end_time=33.0),
+           VideoTimeStamps.objects.create(video=video, start_time=39.0, end_time=40.0),
+           VideoTimeStamps.objects.create(video=video, start_time=40.0, end_time=41.5),
+           VideoTimeStamps.objects.create(video=video, start_time=42.0, end_time=42.5),
+           VideoTimeStamps.objects.create(video=video, start_time=45.0, end_time=45.1),
+    
+         ]
+
+
+
+    try:
+        timestamps = VideoTimeStamps.objects.all()
+        logger.info(f"Fetched {len(timestamps)} timestamps from the database.")
+
+        if not timestamps:
+            logger.warning("No timestamps found in the database.")
+
+        durations = [(ts.end_time - ts.start_time) for ts in timestamps]
+        # categorized_durations= [ for du in durations]
+
+        if not durations:
+            logger.warning("No durations calculated.")
+        
+
+        df = pd.DataFrame({'duration': durations})
+        logger.warn(df)
+
+        # Define bins and labels
+        bins = [-float('inf'), 2, 5, 10, float('inf')]
+        labels = ['<2', '2-5', '5-10', '>10']
+        # Categorize 'duration' column
+        df['duration_category'] = pd.cut(df['duration'], bins=bins, labels=labels, right=False)
+        logger.warn(df)
+
+        hist = px.histogram(df, x='duration_category', title='Video Duration Histogram',
+                            nbins=25 
+                           # histfunc= 'avg'
+                           )
+
+        hist_chart = hist.to_html(full_html = False, include_plotlyjs = False)
+
+        # logger.warn(hist_chart)
+
+        return render(request, 'graph.html', {'hist_chart': hist_chart})
+
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        return 
+
