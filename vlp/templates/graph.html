@@ -12,11 +12,23 @@
     <div class="row">
         <div class="col-6">
             
-            <h3> Histogram </h3>
+            <h3> Histogram of Video Durations in seconds </h3>
     
             {% autoescape off %}
     
-            {{ hist_chart }}
+            {{ hist1_chart }}
+            
+            {% endautoescape %}
+
+        </div>
+
+        <div class="col-6">
+            
+            <h3> Histogram of Predictions </h3>
+    
+            {% autoescape off %}
+    
+            {{ hist2_chart }}
             
             {% endautoescape %}
 

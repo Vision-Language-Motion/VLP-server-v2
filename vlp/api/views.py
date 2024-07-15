@@ -126,34 +126,63 @@ def graph(request):
             logger.warning("No timestamps found in the database.")
 
         durations = [(ts.end_time - ts.start_time) for ts in timestamps]
-        # categorized_durations= [ for du in durations]
+        
 
         if not durations:
             logger.warning("No durations calculated.")
         
 
-        df = pd.DataFrame({'duration': durations})
-        logger.warn(df)
+        df1 = pd.DataFrame({'duration': durations})
+        # logger.info(df)
 
         # Define bins and labels
         bins = [-float('inf'), 2, 5, 10, float('inf')]
         labels = ['<2', '2-5', '5-10', '>10']
         # Categorize 'duration' column
-        df['duration_category'] = pd.cut(df['duration'], bins=bins, labels=labels, right=False)
-        logger.warn(df)
+        df1['duration_category'] = pd.cut(df1['duration'], bins=bins, labels=labels, right=False)
+        # logger.info(df)
 
-        hist = px.histogram(df, x='duration_category', title='Video Duration Histogram',
-                            nbins=25 
-                           # histfunc= 'avg'
+        hist1 = px.histogram(df1, x='duration_category', title='Video Duration Histogram'
+                            # nbins=25 
+                            # histfunc= 'avg'
                            )
 
-        hist_chart = hist.to_html(full_html = False, include_plotlyjs = False)
+        hist1_chart = hist1.to_html(full_html = False, include_plotlyjs = False)
 
         # logger.warn(hist_chart)
 
-        return render(request, 'graph.html', {'hist_chart': hist_chart})
+        if DEBUG:
+            return render(request, 'graph.html', {'hist1_chart': hist1_chart})
 
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")
         return 
+    
+    try:
+        predictions = Prediction.objects.all()
+        logger.info(f"Fetched {len(predictions)} Predictions from the database.")
+
+        if not predictions:
+            logger.warning("No Predictions found in the database.")
+
+        predictions = [pr.prediction for pr in predictions]
+        
+
+        df2 = pd.DataFrame({'predictions': predictions})
+        # logger.info(df2)
+
+        hist2 = px.histogram(df2, x='predictions', title='Predictions Histogram')
+
+        hist2_chart = hist2.to_html(full_html = False, include_plotlyjs = False)
+
+        # logger.info(hist2_chart)
+
+        
+        return render(request, 'graph.html', {'hist1_chart': hist1_chart,'hist2_chart': hist2_chart })
+
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        return 
+    
+
 
