@@ -186,6 +186,7 @@ if not DEBUG:
             q = query,
             type = 'video',
             maxResults = video_amount
+            order='date',
         )
         
         response = request.execute()
