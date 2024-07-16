@@ -139,13 +139,22 @@ class DeleteDuplicates(TestCase):
          add_url_to_db('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
          video = URL.objects.get(url='https://www.youtube.com/watch?v=dQw4w9WgXcQ')
          # Create VideoTimeStamps objects
+
          vdt1 = VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0)
          Prediction.objects.create(prediction ='sh', video_timestamp= vdt1)
          vdt2 = VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0)
          Prediction.objects.create(prediction ='sh', video_timestamp= vdt2)
+         vdt3 = VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0)
+         Prediction.objects.create(prediction ='mu', video_timestamp= vdt3)
+         vdt4 = VideoTimeStamps.objects.create(video=video, start_time=10.0, end_time=20.0)
+         Prediction.objects.create(prediction ='sh', video_timestamp= vdt4)
+         logger.warn(f"Predictions{list(Prediction.objects.all())}")
         
         delete_duplicates_from_model(Prediction, ['video_timestamp', 'prediction'])
 
         if DEBUG:
             assert(URL.objects.filter(url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ').exists())
+            assert(VideoTimeStamps.objects.filter(video = video, start_time = 0.0).exists())
+            assert(VideoTimeStamps.objects.filter(video = video, start_time = 10.0).exists())
+            logger.warn(f"Predictions{list(Prediction.objects.all())}")
 

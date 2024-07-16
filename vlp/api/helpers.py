@@ -8,7 +8,7 @@ from .models import URL, Query
 from django.db import transaction
 from googleapiclient.discovery import build
 from datetime import datetime
-from django.db.models import Count
+from django.db.models import Count, Min
 
 import logging
 logger = logging.getLogger(__name__)
@@ -239,23 +239,36 @@ def delete_duplicates_from_model(model,fields = []):
      logger.warn("No fields Specified")
      return
     
-    duplicates = (model.objects
-                 .values(*fields)
-                 .annotate(count=Count('id'))
-                 .filter(count__gt=1))
+    # Step 1: Get a queryset of potential duplicates based on specified fields
+    potential_duplicates = (
+         model.objects
+              .values(*fields)  # Specify the fields to group by
+              .annotate(min_id=Min('id'))  # Use Min('id') to get the minimum id in each group
+        )
     
-    logger.info("Duplicates:", duplicates)
-    ids_to_delete = []
-    for duplicate in duplicates:
-        # Get IDs of records to delete (all except the first one)
-        ids_to_delete = (model.objects
-                         .filter(**{field: duplicate[field] for field in fields})
-                         .order_by('id')
-                         .values_list('id', flat=True)[1:])
+    logger.warn(f"potential_duplicates:{list(potential_duplicates)}")
+
+    # Step 2: Filter out the items which only appear once
+    duplicates = (
+    potential_duplicates
+           .values('min_id')  # Use the annotated 'min_id' to filter the queryset
+           .filter(min_id__gt = 1)  # Filter where count is greater than 1 (indicating duplicates)
+       )
+    
+    logger.warn(f"duplicates:{list(duplicates)}")
+
+    # Step 3: Get the actual duplicate queryset
+    ids_to_delete = [item['min_id'] for item in duplicates]
      
     if ids_to_delete:
-        logger.info("ids_to_delete:", ids_to_delete)
-        logger.info("model instance:", model.objects.filter(id__in=ids_to_delete))
+        logger.warn(f"ids_to_delete:{ids_to_delete}")
+        logger.warn(f"model instance:{model.objects.filter(id__in=ids_to_delete)}")
+        logger.warn(f"Model objects:{list(model.objects.all())}")
+        
         # model.objects.filter(id__in=ids_to_delete).delete()
+
+        logger.warn(f"Model objects:{list(model.objects.all())}")
+        return
     else:
-        logger.warn("No duplicates found", duplicates)
+        logger.warn(f"No duplicates found{list(duplicates)}")
+        return
