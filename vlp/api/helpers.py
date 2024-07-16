@@ -244,7 +244,7 @@ def delete_duplicates_from_model(model,fields = []):
                  .annotate(count=Count('id'))
                  .filter(count__gt=1))
     
-    logger.warn("Duplicates:", duplicates)
+    logger.info("Duplicates:", duplicates)
     ids_to_delete = []
     for duplicate in duplicates:
         # Get IDs of records to delete (all except the first one)
@@ -254,8 +254,8 @@ def delete_duplicates_from_model(model,fields = []):
                          .values_list('id', flat=True)[1:])
      
     if ids_to_delete:
-        logger.warn("ids_to_delete:", ids_to_delete)
-        logger.warn("model instance:", model.objects.filter(id__in=ids_to_delete))
+        logger.info("ids_to_delete:", ids_to_delete)
+        logger.info("model instance:", model.objects.filter(id__in=ids_to_delete))
         # model.objects.filter(id__in=ids_to_delete).delete()
     else:
         logger.warn("No duplicates found", duplicates)

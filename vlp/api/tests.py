@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 import os
 from .helpers import download_directory, download_video, delete_file, add_url_to_db, add_urls_to_db, add_keyword_to_Query, delete_duplicates_from_model
-from server.settings import BASE_DIR
+from server.settings import BASE_DIR, DEBUG
 from .tasks import query_search
 from .models import URL, Query, VideoTimeStamps, Prediction
 from datetime import datetime
@@ -133,7 +133,19 @@ class DeleteDuplicates(TestCase):
     def test_delete_duplicates_from_model(self):
         # Making Sure the empy case is getting filtered out
         delete_duplicates_from_model(VideoTimeStamps, [])
-        logger.warn("Empty case checked")
+        logger.info("Empty case checked")
         # Testing the function
+        if DEBUG:
+         add_url_to_db('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+         video = URL.objects.get(url='https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+         # Create VideoTimeStamps objects
+         vdt1 = VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0)
+         Prediction.objects.create(prediction ='sh', video_timestamp= vdt1)
+         vdt2 = VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0)
+         Prediction.objects.create(prediction ='sh', video_timestamp= vdt2)
+        
         delete_duplicates_from_model(Prediction, ['video_timestamp', 'prediction'])
+
+        if DEBUG:
+            assert(URL.objects.filter(url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ').exists())
 
