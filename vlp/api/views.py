@@ -5,13 +5,18 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Video, Query, Prediction, VideoTimeStamps, URL
 from .forms import FileUploadForm
 from .serializers import VideoSerializer, PredictionSerializer, QuerySerializer, VideoTimeStampsSerializer, GroupedPredictionSerializer, URLSerializer
-from .helpers import add_keyword_to_Query
+from .helpers import add_keyword_to_Query, add_url_to_db
 from django.db.models import Prefetch
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.shortcuts import render, redirect
 from datetime import datetime
+import plotly.express as px
+import pandas as pd
+from server.settings import DEBUG
 
+import logging
+logger = logging.getLogger(__name__)
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -90,3 +95,94 @@ class URLViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = URL.objects.all()
     serializer_class = URLSerializer
     pagination_class = PageNumberPagination
+
+
+def graph(request):
+
+   #For Testing
+    if DEBUG:
+        add_url_to_db('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        video = URL.objects.get(url='https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        
+        # Create VideoTimeStamps objects
+        timestamps = [
+           VideoTimeStamps.objects.create(video=video, start_time=0.0, end_time=10.0),
+           VideoTimeStamps.objects.create(video=video, start_time=10.0, end_time=15.0),
+           VideoTimeStamps.objects.create(video=video, start_time=30.0, end_time=33.0),
+           VideoTimeStamps.objects.create(video=video, start_time=39.0, end_time=40.0),
+           VideoTimeStamps.objects.create(video=video, start_time=40.0, end_time=41.5),
+           VideoTimeStamps.objects.create(video=video, start_time=42.0, end_time=42.5),
+           VideoTimeStamps.objects.create(video=video, start_time=45.0, end_time=45.1),
+    
+         ]
+
+
+
+    try:
+        timestamps = VideoTimeStamps.objects.all()
+        logger.info(f"Fetched {len(timestamps)} timestamps from the database.")
+
+        if not timestamps:
+            logger.warning("No timestamps found in the database.")
+
+        durations = [(ts.end_time - ts.start_time) for ts in timestamps]
+        
+
+        if not durations:
+            logger.warning("No durations calculated.")
+        
+
+        df1 = pd.DataFrame({'duration': durations})
+        # logger.info(df)
+
+        # Define bins and labels
+        bins = [-float('inf'), 2, 5, 10, float('inf')]
+        labels = ['<2', '2-5', '5-10', '>10']
+        # Categorize 'duration' column
+        df1['duration_category'] = pd.cut(df1['duration'], bins=bins, labels=labels, right=False)
+        # logger.info(df)
+
+        hist1 = px.histogram(df1, x='duration_category', title='Video Duration Histogram'
+                            # nbins=25 
+                            # histfunc= 'avg'
+                           )
+
+        hist1_chart = hist1.to_html(full_html = False, include_plotlyjs = False)
+
+        # logger.warn(hist_chart)
+
+        if DEBUG:
+            return render(request, 'graph.html', {'hist1_chart': hist1_chart})
+
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        return 
+    
+    try:
+        predictions = Prediction.objects.all()
+        logger.info(f"Fetched {len(predictions)} Predictions from the database.")
+
+        if not predictions:
+            logger.warning("No Predictions found in the database.")
+
+        predictions = [pr.prediction for pr in predictions]
+        
+
+        df2 = pd.DataFrame({'predictions': predictions})
+        # logger.info(df2)
+
+        hist2 = px.histogram(df2, x='predictions', title='Predictions Histogram')
+
+        hist2_chart = hist2.to_html(full_html = False, include_plotlyjs = False)
+
+        # logger.info(hist2_chart)
+
+        
+        return render(request, 'graph.html', {'hist1_chart': hist1_chart,'hist2_chart': hist2_chart })
+
+    except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
+        return 
+    
+
+

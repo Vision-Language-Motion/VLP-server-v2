@@ -34,7 +34,7 @@ RUN python -c 'import mmcv;print(mmcv.__version__)'
 
 RUN pip install importlib-metadata==4.13.0
 
-RUN pip install Django djangorestframework python-dotenv gunicorn psycopg2-binary whitenoise celery==5.1.0 django-celery-beat redis yt-dlp moviepy scenedetect google-api-python-client 
+RUN pip install Django djangorestframework python-dotenv gunicorn psycopg2-binary whitenoise celery==5.1.0 django-celery-beat redis yt-dlp moviepy scenedetect google-api-python-client plotly
 
 
 
